@@ -35,7 +35,7 @@ class ClientConnection:
         self.port = port
         self.Authorization = Authorization
         self.ws_client = WSClient(
-            f"wss://{self.host}:{self.port}/v1/student",
+            f"wss://{self.host}:{self.port}/v1/student/ws",
             ping_interval=ping_interval,
             ping_timeout=ping_timeout,
         )
@@ -52,7 +52,7 @@ class ClientConnection:
             msg (Dict): 收到的消息字典。
         """
         msg_type = msg.get("type")
-        if msg_type in ("heartbeat", "heartbeat_response", "pong"):
+        if msg_type in ("heartbeat", "heartbeat_response", "pong", "ping"):
             return
 
         self.run_command(msg)
@@ -126,6 +126,34 @@ class ClientConnection:
             self._loop_thread.start()
             import time
             time.sleep(0.1)
+
+    def send_message(self, message: dict):
+        """
+        发送消息。
+
+        Args:
+            message (dict): 要发送的消息字典。
+        """
+        self.ws_client.send(message)
+
+    def run_command(self, msg: Dict):
+        """
+        处理服务端消息，子类可重写此方法实现自定义逻辑。
+
+        Args:
+            msg (Dict): 收到的消息字典。
+        """
+        type = msg.get("type")
+
+        match type:
+            case "p2p-teacher":
+                self._handle_p2p_message(msg)
+            case "classroom-id-set":
+                pass
+            case "classroom-id-get":
+                pass
+            case _:
+                pass
 
     def _handle_p2p_message(self, msg: Dict):
         """
@@ -264,32 +292,3 @@ class ClientConnection:
         """
         self._on_p2p_message = callback
 
-    def send_message(self, message: dict):
-        """
-        发送消息。
-
-        Args:
-            message (dict): 要发送的消息字典。
-        """
-        self.ws_client.send(message)
-
-    def run_command(self, msg: Dict):
-        """
-        处理服务端消息，子类可重写此方法实现自定义逻辑。
-
-        Args:
-            msg (Dict): 收到的消息字典。
-        """
-        type = msg.get("type")
-
-        match type:
-            case "p2p-teacher":
-                self._handle_p2p_message(msg)
-            case "signup_response":
-                pass
-            case "classroom-id-set":
-                pass
-            case "classroom-id-get":
-                pass
-            case _:
-                pass

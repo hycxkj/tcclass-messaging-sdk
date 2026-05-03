@@ -3,7 +3,8 @@ SDK 客户端模块
 
 提供与消息服务 API 交互的主要客户端类。
 """
-from .client_connect import ClientConnection
+from .connect import ClientConnection
+from .bind import bind
 
 class MessagingClient:
     """
@@ -23,6 +24,7 @@ class MessagingClient:
         self.host = host
         self.port = port
         self.Authorization = Authorization
+        self.bind = Bind(host, port)
         self.client_conn = ClientConnection(host, port, Authorization)
     
     def connect(self):
@@ -36,3 +38,15 @@ class MessagingClient:
         except ConnectionError as e:
             raise MessagingSDKError(f"客户端连接失败: {e}")
         
+    def get_bind_code(self, classroom_id: str = None):
+        """
+        获取绑定教室QR码
+
+        Args:
+            classroom_id (str, optional): 教室ID。默认值为 None。
+
+        Returns:
+            str: 绑定教室QR码。
+        """
+        code = self.bind.get_bind_code(classroom_id, self.Authorization)
+        return code
